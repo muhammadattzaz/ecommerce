@@ -1,0 +1,83 @@
+{
+  "permissions": {
+    "allow": [
+      "Read",
+      "Glob",
+      "Grep",
+      "Bash(npm install*)",
+      "Bash(npm run*)",
+      "Bash(npx*)",
+      "Bash(git status)",
+      "Bash(git log*)",
+      "Bash(git diff*)",
+      "Bash(git add*)",
+      "Bash(git commit*)",
+      "Bash(git checkout*)",
+      "Bash(git branch*)",
+      "Bash(git pull*)",
+      "Bash(git stash*)",
+      "Bash(npx ts-node backend/seed.ts)",
+      "Bash(ls*)",
+      "Bash(mkdir*)",
+      "Bash(cp*)",
+      "Bash(node --version)",
+      "Bash(npm --version)"
+    ],
+    "deny": [
+      "Bash(git push --force*)",
+      "Bash(git push -f*)",
+      "Bash(git reset --hard*)",
+      "Bash(git clean -f*)",
+      "Bash(rm -rf*)",
+      "Bash(npm publish*)",
+      "Bash(chmod 777*)"
+    ]
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash .claude/hooks/backend.sh Bash \"\" \"$CLAUDE_TOOL_INPUT\""
+          }
+        ]
+      },
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash .claude/hooks/backend.sh Edit \"$CLAUDE_TOOL_FILE_PATH\" \"$CLAUDE_TOOL_CONTENT\""
+          },
+          {
+            "type": "command",
+            "command": "bash .claude/hooks/frontend.sh Edit \"$CLAUDE_TOOL_FILE_PATH\" \"$CLAUDE_TOOL_CONTENT\""
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash .claude/hooks/frontend.sh PostEdit \"$CLAUDE_TOOL_FILE_PATH\" \"\""
+          }
+        ]
+      }
+    ],
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash -c \"echo '=== ShopForge Session ===' && echo 'Branch:' $(git branch --show-current 2>/dev/null || echo 'unknown') && echo 'Node:' $(node --version 2>/dev/null) && echo 'Last commit:' $(git log -1 --format='%s' 2>/dev/null || echo 'none')\""
+          }
+        ]
+      }
+    ]
+  }
+}
