@@ -1,26 +1,152 @@
 @import "tailwindcss";
 
+/* ── Design tokens (from design.md) ─────────────────────────────────────── */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* Brand */
+  --color-primary: #F57224;
+  --color-primary-dark: #D45A0F;
+  --color-primary-light: #FFF3EC;
+  --color-action-blue: #0F3460;
+  --color-action-blue-hover: #1B5DA0;
+
+  /* Neutrals */
+  --color-bg-page: #F5F5F5;
+  --color-bg-section: #FFFFFF;
+  --color-border: #E8E8E8;
+  --color-border-dark: #CCCCCC;
+
+  /* Text */
+  --color-text-primary: #222222;
+  --color-text-secondary: #757575;
+  --color-text-muted: #AAAAAA;
+  --color-text-link: #0F3460;
+
+  /* Semantic */
+  --color-price: #F57224;
+  --color-price-original: #AAAAAA;
+  --color-discount: #F57224;
+  --color-star: #FFBB00;
+  --color-success: #00B775;
+  --color-error: #D0021B;
+  --color-warning: #F5A623;
+
+  /* Admin */
+  --color-admin-sidebar: #1A1A2E;
+  --color-admin-sidebar-active: #F57224;
+  --color-stat-blue: #4A90D9;
+  --color-stat-green: #27AE60;
+  --color-stat-purple: #8E44AD;
+  --color-stat-orange: #F57224;
+
+  /* Shadows */
+  --shadow-card: 0 1px 4px rgba(0, 0, 0, 0.08);
+  --shadow-card-hover: 0 4px 12px rgba(0, 0, 0, 0.12);
+  --shadow-dropdown: 0 4px 16px rgba(0, 0, 0, 0.15);
+  --shadow-modal: 0 8px 32px rgba(0, 0, 0, 0.20);
+  --shadow-navbar: 0 2px 8px rgba(0, 0, 0, 0.10);
+
+  /* Background / foreground for root layout */
+  --background: #FFFFFF;
+  --foreground: #222222;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-primary: var(--color-primary);
+  --color-primary-dark: var(--color-primary-dark);
+  --color-primary-light: var(--color-primary-light);
+  --color-action-blue: var(--color-action-blue);
+  --color-border: var(--color-border);
+  --color-text-primary: var(--color-text-primary);
+  --color-text-secondary: var(--color-text-secondary);
+  --color-text-muted: var(--color-text-muted);
+  --color-success: var(--color-success);
+  --color-error: var(--color-error);
+  --color-star: var(--color-star);
+  --color-admin-sidebar: var(--color-admin-sidebar);
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    --background: #111111;
+    --foreground: #F0F0F0;
+    --color-bg-page: #111111;
+    --color-bg-section: #1A1A1A;
+    --color-border: #2A2A2A;
+    --color-text-primary: #F0F0F0;
+    --color-text-secondary: #AAAAAA;
   }
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--color-bg-page);
+  color: var(--color-text-primary);
+  font-family: 'Helvetica Neue', Arial, sans-serif;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+/* ── Product card hover (CSS-only, no JS) ───────────────────────────────── */
+.sf-card {
+  box-shadow: var(--shadow-card);
+  transition: box-shadow 200ms ease, transform 200ms ease;
+}
+.sf-card:hover {
+  box-shadow: var(--shadow-card-hover);
+  transform: translateY(-2px);
+}
+
+/* ── Skeleton shimmer ───────────────────────────────────────────────────── */
+.sf-shimmer {
+  background: linear-gradient(90deg, #f5f5f5 25%, #ebebeb 50%, #f5f5f5 75%);
+  background-size: 200% 100%;
+  animation: sf-shimmer 1.5s infinite;
+}
+@keyframes sf-shimmer {
+  0%   { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* ── Status badges ──────────────────────────────────────────────────────── */
+.sf-badge {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 3px 8px;
+  border-radius: 9999px;
+  display: inline-block;
+  white-space: nowrap;
+}
+.sf-badge-pending    { background: #FFF3E0; color: #E65100; }
+.sf-badge-processing { background: #E3F2FD; color: #1565C0; }
+.sf-badge-shipped    { background: #F3E5F5; color: #6A1B9A; }
+.sf-badge-delivered  { background: #E8F5E9; color: #2E7D32; }
+.sf-badge-cancelled  { background: #FFEBEE; color: #C62828; }
+
+/* ── Admin sidebar ──────────────────────────────────────────────────────── */
+.sf-sidebar-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  height: 44px;
+  padding: 0 20px;
+  font-size: 13px;
+  color: rgba(255,255,255,0.7);
+  border-left: 3px solid transparent;
+  transition: background 150ms, color 150ms;
+  text-decoration: none;
+}
+.sf-sidebar-item:hover {
+  background: rgba(255,255,255,0.06);
+  color: #ffffff;
+}
+.sf-sidebar-item.active {
+  background: rgba(245,114,36,0.15);
+  color: var(--color-primary);
+  border-left-color: var(--color-primary);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sf-card    { transition: none; }
+  .sf-shimmer { animation: none; }
 }

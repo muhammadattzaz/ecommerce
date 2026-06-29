@@ -14,7 +14,7 @@ export class User {
   @Prop({ required: true, select: false })
   passwordHash: string;
 
-  @Prop({ select: false, default: null })
+  @Prop({ type: String, select: false, default: null })
   refreshToken: string | null;
 
   @Prop({ type: String, enum: ['customer', 'admin'], default: 'customer' })
