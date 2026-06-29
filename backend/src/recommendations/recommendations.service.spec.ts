@@ -32,7 +32,7 @@ function buildQueryMock(returnValue: unknown) {
 
 describe('RecommendationsService', () => {
   let service: RecommendationsService;
-  let orderModel: { find: jest.Mock };
+  let orderModel: { find: jest.Mock; _orderQuery?: { find: jest.Mock; limit: jest.Mock } };
   let productModel: {
     find: jest.Mock;
     _query: ReturnType<typeof buildQueryMock>;
