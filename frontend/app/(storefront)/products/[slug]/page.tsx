@@ -10,6 +10,7 @@ import { useAddToCart } from '@/lib/hooks/use-cart';
 import { useCartStore } from '@/lib/stores/cart.store';
 import { formatPrice, getImageUrl } from '@/lib/utils';
 import { ROUTES } from '@/lib/routes';
+import { ProductRecommendations } from '@/components/storefront/product-recommendations';
 import type { Category } from '@/types/product';
 
 export default function ProductDetailPage() {
@@ -202,6 +203,8 @@ export default function ProductDetailPage() {
           </div>
         </div>
       </div>
+
+      <ProductRecommendations currentProductId={product._id} />
     </div>
   );
 }
