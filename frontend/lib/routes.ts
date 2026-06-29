@@ -8,6 +8,8 @@ export const ROUTES = {
   ORDER: (id: string) => `/orders/${id}`,
   LOGIN: '/auth/login',
   REGISTER: '/auth/register',
+  PROFILE: '/profile',
+  DASHBOARD: '/dashboard',
   ADMIN: {
     DASHBOARD: '/admin',
     PRODUCTS: '/admin/products',
@@ -15,5 +17,6 @@ export const ROUTES = {
     EDIT_PRODUCT: (id: string) => `/admin/products/${id}/edit`,
     ORDERS: '/admin/orders',
     ORDER: (id: string) => `/admin/orders/${id}`,
+    CATEGORIES: '/admin/categories',
   },
 } as const;

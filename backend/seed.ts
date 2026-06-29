@@ -41,7 +41,17 @@ const ProductSchema = new mongoose.Schema({
 
 const CartSchema = new mongoose.Schema({
   user: { type: mongoose.Schema.Types.ObjectId, ref: 'User', unique: true },
-  items: { type: Array, default: [] },
+  items: {
+    type: [{
+      productId: { type: mongoose.Schema.Types.ObjectId, ref: 'Product' },
+      name: String,
+      price: Number,
+      priceAtAdd: Number,
+      quantity: Number,
+      imageUrl: { type: String, default: null },
+    }],
+    default: [],
+  },
 }, { timestamps: true });
 
 const OrderSchema = new mongoose.Schema({
@@ -83,19 +93,37 @@ async function seed() {
   ]);
   console.log('Cleared existing data');
 
-  // Users
-  const [adminHash, customerHash] = await Promise.all([
+  // ── Users ──────────────────────────────────────────────────────────────
+  // Roles: admin | customer
+  const [adminHash, customer1Hash, customer2Hash] = await Promise.all([
     bcrypt.hash('Admin@123!', 12),
     bcrypt.hash('Customer@123!', 12),
+    bcrypt.hash('Jane@123!', 12),
   ]);
 
-  const [admin, customer] = await User.insertMany([
-    { name: 'Admin User', email: 'admin@shopforge.com', passwordHash: adminHash, role: 'admin' },
-    { name: 'John Customer', email: 'customer@shopforge.com', passwordHash: customerHash, role: 'customer' },
+  const [admin, customer1, customer2] = await User.insertMany([
+    {
+      name: 'Admin User',
+      email: 'admin@shopforge.com',
+      passwordHash: adminHash,
+      role: 'admin',
+    },
+    {
+      name: 'John Customer',
+      email: 'customer@shopforge.com',
+      passwordHash: customer1Hash,
+      role: 'customer',
+    },
+    {
+      name: 'Jane Doe',
+      email: 'jane@shopforge.com',
+      passwordHash: customer2Hash,
+      role: 'customer',
+    },
   ]);
-  console.log('Created users');
+  console.log('Created 3 users (1 admin, 2 customers)');
 
-  // Categories
+  // ── Categories ─────────────────────────────────────────────────────────
   const categoryData = [
     { name: 'Electronics', description: 'Phones, computers, gadgets and more' },
     { name: 'Clothing', description: 'Fashion for every occasion' },
@@ -108,9 +136,9 @@ async function seed() {
     categoryData.map((c) => ({ ...c, slug: slug(c.name) })),
   );
   const catMap = Object.fromEntries(categories.map((c) => [c.name, c._id]));
-  console.log('Created categories');
+  console.log(`Created ${categories.length} categories`);
 
-  // Products — 4 per category
+  // ── Products — 4 per category ──────────────────────────────────────────
   const productData = [
     // Electronics
     { name: 'iPhone 15 Pro', description: 'Apple iPhone 15 Pro with titanium design, 48MP camera', price: 99999, stock: 25, category: 'Electronics', rating: 4.8, reviewCount: 312 },
@@ -148,33 +176,90 @@ async function seed() {
   );
   console.log(`Created ${products.length} products`);
 
-  // Pre-seeded orders for customer
-  const shippingAddress = {
+  // ── Convenient product lookup maps ────────────────────────────────────
+  const byCategory = (catName: string) =>
+    products.filter((p) => p.category.toString() === catMap[catName].toString());
+
+  const electronics = byCategory('Electronics');
+  const books = byCategory('Books');
+  const sports = byCategory('Sports');
+  const clothing = byCategory('Clothing');
+  const home = byCategory('Home & Garden');
+
+  // ── Carts ──────────────────────────────────────────────────────────────
+  // customer1 has 2 items in their cart
+  await Cart.insertMany([
+    {
+      user: customer1._id,
+      items: [
+        {
+          productId: electronics[0]._id,
+          name: electronics[0].name,
+          price: electronics[0].price,
+          priceAtAdd: electronics[0].price,
+          quantity: 1,
+          imageUrl: null,
+        },
+        {
+          productId: books[0]._id,
+          name: books[0].name,
+          price: books[0].price,
+          priceAtAdd: books[0].price,
+          quantity: 2,
+          imageUrl: null,
+        },
+      ],
+    },
+    // customer2 has 1 item in their cart
+    {
+      user: customer2._id,
+      items: [
+        {
+          productId: sports[3]._id,
+          name: sports[3].name,
+          price: sports[3].price,
+          priceAtAdd: sports[3].price,
+          quantity: 1,
+          imageUrl: null,
+        },
+      ],
+    },
+  ]);
+  console.log('Created carts for 2 customers');
+
+  // ── Orders ─────────────────────────────────────────────────────────────
+  const addr1 = {
     fullName: 'John Customer',
     line1: '123 High Street',
     city: 'London',
     postcode: 'SW1A 1AA',
     country: 'United Kingdom',
   };
-
-  const electronics = products.filter((p) => p.category.toString() === catMap['Electronics'].toString());
-  const books = products.filter((p) => p.category.toString() === catMap['Books'].toString());
+  const addr2 = {
+    fullName: 'Jane Doe',
+    line1: '45 Baker Street',
+    city: 'Manchester',
+    postcode: 'M1 1AE',
+    country: 'United Kingdom',
+  };
 
   await Order.insertMany([
+    // customer1 — delivered order (Electronics)
     {
-      user: customer._id,
+      user: customer1._id,
       items: [
         { productId: electronics[2]._id, name: electronics[2].name, price: electronics[2].price, quantity: 1, imageUrl: null },
       ],
       subtotal: electronics[2].price,
       shipping: 0,
       total: electronics[2].price,
-      shippingAddress,
+      shippingAddress: addr1,
       status: 'delivered',
       paymentReference: 'PAY-SEED0001',
     },
+    // customer1 — shipped order (Books)
     {
-      user: customer._id,
+      user: customer1._id,
       items: [
         { productId: books[0]._id, name: books[0].name, price: books[0].price, quantity: 2, imageUrl: null },
         { productId: books[1]._id, name: books[1].name, price: books[1].price, quantity: 1, imageUrl: null },
@@ -182,29 +267,81 @@ async function seed() {
       subtotal: books[0].price * 2 + books[1].price,
       shipping: 0,
       total: books[0].price * 2 + books[1].price,
-      shippingAddress,
+      shippingAddress: addr1,
       status: 'shipped',
       paymentReference: 'PAY-SEED0002',
     },
+    // customer1 — processing order (Electronics)
     {
-      user: customer._id,
+      user: customer1._id,
       items: [
         { productId: electronics[0]._id, name: electronics[0].name, price: electronics[0].price, quantity: 1, imageUrl: null },
       ],
       subtotal: electronics[0].price,
       shipping: 0,
       total: electronics[0].price,
-      shippingAddress,
+      shippingAddress: addr1,
       status: 'processing',
       paymentReference: 'PAY-SEED0003',
     },
+    // customer1 — pending order (Clothing + Sports)
+    {
+      user: customer1._id,
+      items: [
+        { productId: clothing[0]._id, name: clothing[0].name, price: clothing[0].price, quantity: 1, imageUrl: null },
+        { productId: sports[1]._id, name: sports[1].name, price: sports[1].price, quantity: 2, imageUrl: null },
+      ],
+      subtotal: clothing[0].price + sports[1].price * 2,
+      shipping: 499,
+      total: clothing[0].price + sports[1].price * 2 + 499,
+      shippingAddress: addr1,
+      status: 'pending',
+      paymentReference: 'PAY-SEED0004',
+    },
+    // customer2 — delivered order (Home & Garden)
+    {
+      user: customer2._id,
+      items: [
+        { productId: home[1]._id, name: home[1].name, price: home[1].price, quantity: 1, imageUrl: null },
+        { productId: home[3]._id, name: home[3].name, price: home[3].price, quantity: 1, imageUrl: null },
+      ],
+      subtotal: home[1].price + home[3].price,
+      shipping: 0,
+      total: home[1].price + home[3].price,
+      shippingAddress: addr2,
+      status: 'delivered',
+      paymentReference: 'PAY-SEED0005',
+    },
+    // customer2 — cancelled order (Sports)
+    {
+      user: customer2._id,
+      items: [
+        { productId: sports[0]._id, name: sports[0].name, price: sports[0].price, quantity: 1, imageUrl: null },
+      ],
+      subtotal: sports[0].price,
+      shipping: 0,
+      total: sports[0].price,
+      shippingAddress: addr2,
+      status: 'cancelled',
+      paymentReference: 'PAY-SEED0006',
+    },
   ]);
-  console.log('Created 3 seed orders');
+  console.log('Created 6 seed orders (4 for customer1, 2 for customer2)');
 
   await mongoose.disconnect();
-  console.log('\n✅ Seed complete!');
-  console.log('   Admin:    admin@shopforge.com / Admin@123!');
-  console.log('   Customer: customer@shopforge.com / Customer@123!');
+
+  console.log('\n✅ Seed complete!\n');
+  console.log('┌──────────────────────────────────────────────────────────────┐');
+  console.log('│                    SEEDED LOGIN CREDENTIALS                  │');
+  console.log('├──────────────┬───────────────────────────────┬───────────────┤');
+  console.log('│ Role         │ Email                         │ Password      │');
+  console.log('├──────────────┼───────────────────────────────┼───────────────┤');
+  console.log('│ Admin        │ admin@shopforge.com           │ Admin@123!    │');
+  console.log('│ Customer 1   │ customer@shopforge.com        │ Customer@123! │');
+  console.log('│ Customer 2   │ jane@shopforge.com            │ Jane@123!     │');
+  console.log('└──────────────┴───────────────────────────────┴───────────────┘');
+  console.log('\n  Admin panel:  http://localhost:3000/admin');
+  console.log('  Storefront:   http://localhost:3000\n');
 }
 
 seed().catch((err) => {

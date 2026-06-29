@@ -1,12 +1,11 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { ProductCard } from '@/components/storefront/product-card';
 import { useProducts, useCategories } from '@/lib/hooks/use-products';
 import { ROUTES } from '@/lib/routes';
-import type { Product } from '@/types/product';
-import type { Category } from '@/types/product';
+import type { Product, Category } from '@/types/product';
 
 const SORT_OPTIONS = [
   { value: '', label: 'Relevance' },
@@ -24,6 +23,12 @@ export default function ProductsPage() {
   const categorySlug = searchParams.get('category') ?? '';
   const sort = searchParams.get('sort') ?? '';
   const page = parseInt(searchParams.get('page') ?? '1');
+  const minPriceParam = searchParams.get('minPrice') ?? '';
+  const maxPriceParam = searchParams.get('maxPrice') ?? '';
+
+  // Local state for price inputs — only apply on "Apply" click
+  const [minInput, setMinInput] = useState(minPriceParam);
+  const [maxInput, setMaxInput] = useState(maxPriceParam);
 
   const { data: categories } = useCategories();
   const activeCategoryId = categories?.find((c: Category) => c.slug === categorySlug)?._id;
@@ -34,6 +39,9 @@ export default function ProductsPage() {
     sort: sort || undefined,
     page,
     limit: 20,
+    // Backend stores prices in pence — multiply user's £ input by 100
+    minPrice: minPriceParam ? Math.round(parseFloat(minPriceParam) * 100) : undefined,
+    maxPrice: maxPriceParam ? Math.round(parseFloat(maxPriceParam) * 100) : undefined,
   });
 
   function setParam(key: string, value: string) {
@@ -44,13 +52,32 @@ export default function ProductsPage() {
     router.push(`${ROUTES.PRODUCTS}?${params.toString()}`);
   }
 
+  function applyPriceFilter() {
+    const params = new URLSearchParams(searchParams.toString());
+    params.delete('page');
+    if (minInput) params.set('minPrice', minInput);
+    else params.delete('minPrice');
+    if (maxInput) params.set('maxPrice', maxInput);
+    else params.delete('maxPrice');
+    router.push(`${ROUTES.PRODUCTS}?${params.toString()}`);
+  }
+
+  function clearAll() {
+    setMinInput('');
+    setMaxInput('');
+    router.push(ROUTES.PRODUCTS);
+  }
+
+  const hasActiveFilters = categorySlug || minPriceParam || maxPriceParam || search;
+
   return (
     <div className="max-w-[1200px] mx-auto px-4 py-4">
       <div className="flex gap-4">
 
         {/* ── Sidebar filters ── */}
         <aside className="hidden lg:block w-52 shrink-0">
-          <div className="bg-white border border-[#E8E8E8] rounded-[4px] p-4">
+          {/* Categories */}
+          <div className="bg-white border border-[#E8E8E8] rounded-[4px] p-4 mb-3">
             <h3 className="text-[13px] font-bold text-gray-800 mb-3">Categories</h3>
             <ul className="space-y-1">
               <li>
@@ -81,6 +108,48 @@ export default function ProductsPage() {
               ))}
             </ul>
           </div>
+
+          {/* Price range */}
+          <div className="bg-white border border-[#E8E8E8] rounded-[4px] p-4">
+            <h3 className="text-[13px] font-bold text-gray-800 mb-3">Price (£)</h3>
+            <div className="flex items-center gap-2 mb-2">
+              <input
+                type="number"
+                min="0"
+                step="1"
+                placeholder="Min"
+                value={minInput}
+                onChange={(e) => setMinInput(e.target.value)}
+                className="w-full h-8 px-2 border border-[#E8E8E8] rounded-[4px] text-[12px] outline-none focus:border-[#F57224]"
+              />
+              <span className="text-gray-400 text-[12px]">–</span>
+              <input
+                type="number"
+                min="0"
+                step="1"
+                placeholder="Max"
+                value={maxInput}
+                onChange={(e) => setMaxInput(e.target.value)}
+                className="w-full h-8 px-2 border border-[#E8E8E8] rounded-[4px] text-[12px] outline-none focus:border-[#F57224]"
+              />
+            </div>
+            <button
+              onClick={applyPriceFilter}
+              className="w-full h-7 text-[12px] font-semibold text-white rounded-[4px] transition-colors"
+              style={{ background: 'var(--color-primary)' }}
+            >
+              Apply
+            </button>
+          </div>
+
+          {hasActiveFilters && (
+            <button
+              onClick={clearAll}
+              className="mt-2 w-full text-[12px] text-gray-500 hover:text-[#F57224] transition-colors"
+            >
+              Clear all filters
+            </button>
+          )}
         </aside>
 
         {/* ── Main content ── */}
@@ -90,6 +159,15 @@ export default function ProductsPage() {
             <p className="text-[13px] text-gray-500">
               {isLoading ? 'Loading…' : `${data?.total ?? 0} products`}
               {search && <span className="ml-1 font-medium text-gray-700">for &quot;{search}&quot;</span>}
+              {(minPriceParam || maxPriceParam) && (
+                <span className="ml-1 text-[#F57224]">
+                  {minPriceParam && maxPriceParam
+                    ? ` £${minPriceParam}–£${maxPriceParam}`
+                    : minPriceParam
+                    ? ` from £${minPriceParam}`
+                    : ` up to £${maxPriceParam}`}
+                </span>
+              )}
             </p>
             <div className="flex items-center gap-2">
               <span className="text-[12px] text-gray-500 hidden sm:inline">Sort:</span>
@@ -132,10 +210,7 @@ export default function ProductsPage() {
           ) : data?.data.length === 0 ? (
             <div className="bg-white border border-[#E8E8E8] rounded-[4px] py-16 text-center">
               <p className="text-gray-500 text-[14px]">No products found.</p>
-              <button
-                onClick={() => router.push(ROUTES.PRODUCTS)}
-                className="mt-3 text-[13px] text-[#F57224] hover:underline"
-              >
+              <button onClick={clearAll} className="mt-3 text-[13px] text-[#F57224] hover:underline">
                 Clear filters
               </button>
             </div>

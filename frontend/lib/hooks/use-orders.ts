@@ -33,6 +33,15 @@ export function useCreateOrder() {
 }
 
 // Admin
+export function useAdminOrder(id: string) {
+  return useQuery({
+    queryKey: ['orders', 'admin', id],
+    queryFn: () => ordersApi.getAdminOrder(id),
+    staleTime: 1000 * 60,
+    enabled: !!id,
+  });
+}
+
 export function useAllOrders(params: { page?: number; limit?: number; status?: string } = {}) {
   return useQuery({
     queryKey: ['orders', 'admin', params],

@@ -68,7 +68,7 @@ JWT_EXPIRES_IN=15m
 JWT_REFRESH_EXPIRES_IN=7d
 
 # Server
-PORT=3001
+PORT=8000
 NODE_ENV=development
 
 # CORS — must match your frontend URL
@@ -82,7 +82,7 @@ MAX_FILE_SIZE_MB=5
 ### 3. Frontend environment variables (`frontend/.env.local`)
 
 ```env
-NEXT_PUBLIC_API_URL=http://localhost:3001/api/v1
+NEXT_PUBLIC_API_URL=http://localhost:8000/api/v1
 ```
 
 ---
@@ -110,7 +110,8 @@ npx ts-node seed.ts
 | Role | Email | Password |
 |---|---|---|
 | Admin | `admin@shopforge.com` | `Admin@123!` |
-| Customer | `customer@shopforge.com` | `Customer@123!` |
+| Customer 1 | `customer@shopforge.com` | `Customer@123!` |
+| Customer 2 | `jane@shopforge.com` | `Jane@123!` |
 
 > Run the seed script before starting the app for the first time, and any time you want to reset to clean sample data.
 
@@ -121,7 +122,7 @@ npx ts-node seed.ts
 ### Development (both apps concurrently)
 
 ```bash
-# From the root — starts api on :3001 and web on :3000
+# From the root — starts api on :8000 and web on :3000
 npm run dev
 ```
 
@@ -171,9 +172,9 @@ cd backend && npm run test:cov
 |---|---|
 | `http://localhost:3000` | Customer storefront |
 | `http://localhost:3000/admin` | Admin panel (admin login required) |
-| `http://localhost:3001/api/v1` | REST API base |
-| `http://localhost:3001/api/docs` | Swagger API documentation |
-| `http://localhost:3001/uploads/*` | Uploaded product images |
+| `http://localhost:8000/api/v1` | REST API base |
+| `http://localhost:8000/api/docs` | Swagger API documentation |
+| `http://localhost:8000/uploads/*` | Uploaded product images |
 
 ---
 
@@ -255,7 +256,7 @@ Any expiry date and CVV are accepted. The payment step introduces a 1.5-second a
 
 ## Product Image Uploads
 
-Images are uploaded directly to `backend/uploads/` and served statically at `http://localhost:3001/uploads/<filename>`.
+Images are uploaded directly to `backend/uploads/` and served statically at `http://localhost:8000/uploads/<filename>`.
 
 - Accepted formats: JPEG, PNG, WebP
 - Max file size: 5 MB (configurable via `MAX_FILE_SIZE_MB`)

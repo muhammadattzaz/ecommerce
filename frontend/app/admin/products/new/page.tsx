@@ -1,13 +1,16 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { ChevronRight } from 'lucide-react';
+import Image from 'next/image';
+import { ChevronRight, Upload, X } from 'lucide-react';
 import { useCategories } from '@/lib/hooks/use-products';
 import { productsApi } from '@/lib/api/products';
+import { uploadImage } from '@/lib/api/upload';
 import { useQueryClient } from '@tanstack/react-query';
 import { ROUTES } from '@/lib/routes';
+import { getImageUrl } from '@/lib/utils';
 import type { Category } from '@/types/product';
 import { ApiError } from '@/lib/api/client';
 
@@ -17,6 +20,11 @@ export default function NewProductPage() {
   const { data: categories } = useCategories();
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
+  const [imageUrl, setImageUrl] = useState<string | null>(null);
+  const [uploading, setUploading] = useState(false);
+  const [dragOver, setDragOver] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
   const [form, setForm] = useState({
     name: '',
     description: '',
@@ -28,6 +36,23 @@ export default function NewProductPage() {
 
   function set(key: string, value: string | boolean) {
     setForm((f) => ({ ...f, [key]: value }));
+  }
+
+  async function handleFile(file: File) {
+    if (!file.type.startsWith('image/')) {
+      setError('Only image files are allowed');
+      return;
+    }
+    setUploading(true);
+    setError('');
+    try {
+      const url = await uploadImage(file);
+      setImageUrl(url);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Image upload failed');
+    } finally {
+      setUploading(false);
+    }
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -42,6 +67,7 @@ export default function NewProductPage() {
         stock: parseInt(form.stock),
         category: form.category,
         isActive: form.isActive,
+        ...(imageUrl ? { imageUrl } : {}),
       });
       await queryClient.invalidateQueries({ queryKey: ['products'] });
       router.push(ROUTES.ADMIN.PRODUCTS);
@@ -51,6 +77,8 @@ export default function NewProductPage() {
       setSaving(false);
     }
   }
+
+  const previewSrc = imageUrl ? getImageUrl(imageUrl) : null;
 
   return (
     <div className="max-w-[600px]">
@@ -63,6 +91,58 @@ export default function NewProductPage() {
       <h1 className="text-[20px] font-bold text-gray-900 mb-4">New Product</h1>
 
       <form onSubmit={handleSubmit} className="bg-white border border-[#E8E8E8] rounded-[4px] p-5 space-y-4">
+
+        {/* Image uploader */}
+        <div>
+          <label className="block text-[12px] font-medium text-gray-700 mb-1">Product Image</label>
+          {previewSrc ? (
+            <div className="relative w-24 h-24 rounded-[4px] overflow-hidden border border-[#E8E8E8]">
+              <Image src={previewSrc} alt="Preview" fill className="object-cover" />
+              <button
+                type="button"
+                onClick={() => setImageUrl(null)}
+                className="absolute top-0.5 right-0.5 w-5 h-5 bg-black/60 text-white rounded-full flex items-center justify-center"
+              >
+                <X size={10} />
+              </button>
+            </div>
+          ) : (
+            <div
+              onClick={() => fileInputRef.current?.click()}
+              onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
+              onDragLeave={() => setDragOver(false)}
+              onDrop={(e) => {
+                e.preventDefault();
+                setDragOver(false);
+                const f = e.dataTransfer.files[0];
+                if (f) handleFile(f);
+              }}
+              className="flex flex-col items-center justify-center gap-1.5 h-24 border-2 border-dashed rounded-[4px] cursor-pointer transition-colors"
+              style={{
+                borderColor: dragOver ? '#F57224' : '#E8E8E8',
+                background: dragOver ? 'rgba(245,114,36,0.04)' : '#FAFAFA',
+              }}
+            >
+              {uploading ? (
+                <span className="text-[12px] text-gray-400">Uploading…</span>
+              ) : (
+                <>
+                  <Upload size={20} className="text-gray-300" />
+                  <span className="text-[12px] text-gray-400">Click or drag image here</span>
+                  <span className="text-[11px] text-gray-300">JPEG · PNG · WebP · max 5 MB</span>
+                </>
+              )}
+            </div>
+          )}
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/jpeg,image/png,image/webp"
+            className="hidden"
+            onChange={(e) => { const f = e.target.files?.[0]; if (f) handleFile(f); }}
+          />
+        </div>
+
         <div>
           <label className="block text-[12px] font-medium text-gray-700 mb-1">Name *</label>
           <input
@@ -144,7 +224,7 @@ export default function NewProductPage() {
         <div className="flex gap-3 pt-1">
           <button
             type="submit"
-            disabled={saving}
+            disabled={saving || uploading}
             className="px-5 py-2.5 text-[13px] font-semibold text-white rounded-[4px] disabled:opacity-70"
             style={{ background: 'var(--color-primary)' }}
           >

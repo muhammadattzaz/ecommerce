@@ -1,11 +1,12 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Search, ShoppingCart, Menu, X, ChevronDown, User } from 'lucide-react';
+import { Search, ShoppingCart, Menu, X, ChevronDown, User, LayoutDashboard, Package, LogOut, Settings } from 'lucide-react';
 import { useCart } from '@/lib/hooks/use-cart';
 import { useAuth } from '@/lib/hooks/use-auth';
+import { ROUTES } from '@/lib/routes';
 
 const CATEGORIES = [
   { name: 'Electronics', slug: 'electronics' },
@@ -15,11 +16,120 @@ const CATEGORIES = [
   { name: 'Sports', slug: 'sports' },
 ];
 
+function UserDropdown({ user, isAdmin, logout }: { user: { name: string; email: string }; isAdmin: boolean; logout: () => void }) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function onClickOutside(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    }
+    document.addEventListener('mousedown', onClickOutside);
+    return () => document.removeEventListener('mousedown', onClickOutside);
+  }, []);
+
+  const firstName = user.name.split(' ')[0];
+
+  return (
+    <div ref={ref} className="relative">
+      <button
+        onClick={() => setOpen((o) => !o)}
+        className="flex items-center gap-1.5 text-white text-[13px] font-medium hover:opacity-90 transition-opacity"
+      >
+        <div className="w-7 h-7 rounded-full bg-white/20 flex items-center justify-center shrink-0">
+          <User size={14} />
+        </div>
+        <span className="hidden sm:block">{firstName}</span>
+        <ChevronDown size={13} className={`hidden sm:block transition-transform ${open ? 'rotate-180' : ''}`} />
+      </button>
+
+      {open && (
+        <div
+          className="absolute right-0 top-full mt-2 w-52 bg-white rounded-[6px] border border-[#E8E8E8] z-50 overflow-hidden"
+          style={{ boxShadow: '0 4px 20px rgba(0,0,0,0.12)' }}
+        >
+          {/* User info header */}
+          <div className="px-4 py-3 border-b border-[#F0F0F0]">
+            <p className="text-[13px] font-semibold text-gray-900 truncate">{user.name}</p>
+            <p className="text-[11px] text-gray-400 truncate">{user.email}</p>
+            {isAdmin && (
+              <span className="inline-block mt-1 text-[10px] font-bold px-1.5 py-0.5 rounded text-white" style={{ background: 'var(--color-primary)' }}>
+                Admin
+              </span>
+            )}
+          </div>
+
+          <div className="py-1">
+            <Link
+              href={ROUTES.PROFILE}
+              onClick={() => setOpen(false)}
+              className="flex items-center gap-3 px-4 py-2.5 text-[13px] text-gray-700 hover:bg-gray-50 transition-colors"
+            >
+              <User size={14} className="text-gray-400" />
+              My Profile
+            </Link>
+
+            {isAdmin ? (
+              <Link
+                href={ROUTES.ADMIN.DASHBOARD}
+                onClick={() => setOpen(false)}
+                className="flex items-center gap-3 px-4 py-2.5 text-[13px] text-gray-700 hover:bg-gray-50 transition-colors"
+              >
+                <LayoutDashboard size={14} className="text-gray-400" />
+                Admin Dashboard
+              </Link>
+            ) : (
+              <Link
+                href={ROUTES.DASHBOARD}
+                onClick={() => setOpen(false)}
+                className="flex items-center gap-3 px-4 py-2.5 text-[13px] text-gray-700 hover:bg-gray-50 transition-colors"
+              >
+                <LayoutDashboard size={14} className="text-gray-400" />
+                My Dashboard
+              </Link>
+            )}
+
+            <Link
+              href={ROUTES.ORDERS}
+              onClick={() => setOpen(false)}
+              className="flex items-center gap-3 px-4 py-2.5 text-[13px] text-gray-700 hover:bg-gray-50 transition-colors"
+            >
+              <Package size={14} className="text-gray-400" />
+              My Orders
+            </Link>
+
+            {isAdmin && (
+              <Link
+                href={ROUTES.ADMIN.PRODUCTS}
+                onClick={() => setOpen(false)}
+                className="flex items-center gap-3 px-4 py-2.5 text-[13px] text-gray-700 hover:bg-gray-50 transition-colors"
+              >
+                <Settings size={14} className="text-gray-400" />
+                Manage Store
+              </Link>
+            )}
+          </div>
+
+          <div className="border-t border-[#F0F0F0] py-1">
+            <button
+              onClick={() => { logout(); setOpen(false); }}
+              className="flex items-center gap-3 w-full px-4 py-2.5 text-[13px] text-[#D0021B] hover:bg-red-50 transition-colors"
+            >
+              <LogOut size={14} />
+              Logout
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export function Navbar() {
   const [searchQuery, setSearchQuery] = useState('');
   const [mobileOpen, setMobileOpen] = useState(false);
   const router = useRouter();
-  const { user, isAuthenticated, logout } = useAuth();
+  const { user, isAuthenticated, isAdmin, logout } = useAuth();
   const { data: cart } = useCart();
 
   const cartCount =
@@ -46,21 +156,24 @@ export function Navbar() {
           </div>
           <div className="flex items-center gap-3 text-[12px] text-white/70">
             {isAuthenticated ? (
-              <>
-                <span className="text-white/50">Hi, {user?.name?.split(' ')[0] ?? 'User'}</span>
+              <div className="flex items-center gap-2">
+                {isAdmin && (
+                  <>
+                    <Link href={ROUTES.ADMIN.DASHBOARD} className="text-white/50 hover:text-white transition-colors">
+                      Admin Panel
+                    </Link>
+                    <span className="text-white/30">·</span>
+                  </>
+                )}
+                <Link href={ROUTES.ORDERS} className="hover:text-white transition-colors">Orders</Link>
                 <span className="text-white/30">·</span>
-                <button
-                  onClick={() => logout()}
-                  className="hover:text-white transition-colors"
-                >
-                  Logout
-                </button>
-              </>
+                <Link href={ROUTES.PROFILE} className="hover:text-white transition-colors">My Profile</Link>
+              </div>
             ) : (
               <>
-                <Link href="/auth/login" className="hover:text-white transition-colors">Login</Link>
+                <Link href={ROUTES.LOGIN} className="hover:text-white transition-colors">Login</Link>
                 <span className="text-white/30">·</span>
-                <Link href="/auth/register" className="text-white font-medium hover:text-white/80 transition-colors">
+                <Link href={ROUTES.REGISTER} className="text-white font-medium hover:text-white/80 transition-colors">
                   Sign Up
                 </Link>
               </>
@@ -116,10 +229,12 @@ export function Navbar() {
               <span className="hidden sm:block text-[13px] font-medium">Cart</span>
             </Link>
 
-            {/* Sign In — desktop */}
-            {!isAuthenticated && (
+            {/* User dropdown (authenticated) or Sign In button */}
+            {isAuthenticated && user ? (
+              <UserDropdown user={user} isAdmin={isAdmin} logout={logout} />
+            ) : (
               <Link
-                href="/auth/login"
+                href={ROUTES.LOGIN}
                 className="hidden sm:flex items-center gap-1 text-white text-[13px] font-medium"
               >
                 <User size={18} />
@@ -212,13 +327,65 @@ export function Navbar() {
                 {cat.name}
               </Link>
             ))}
-            {!isAuthenticated && (
+            {isAuthenticated && user ? (
+              <div
+                className="pt-3 mt-1 border-t space-y-0.5"
+                style={{ borderColor: 'var(--color-border)' }}
+              >
+                <div className="pb-2 mb-1 border-b" style={{ borderColor: 'var(--color-border)' }}>
+                  <p className="text-[13px] font-semibold text-gray-900">{user.name}</p>
+                  <p className="text-[11px] text-gray-400">{user.email}</p>
+                </div>
+                <Link
+                  href={ROUTES.PROFILE}
+                  onClick={() => setMobileOpen(false)}
+                  className="flex items-center gap-2 py-2.5 text-[14px] text-gray-700"
+                >
+                  <User size={14} className="text-gray-400" />
+                  My Profile
+                </Link>
+                {isAdmin ? (
+                  <Link
+                    href={ROUTES.ADMIN.DASHBOARD}
+                    onClick={() => setMobileOpen(false)}
+                    className="flex items-center gap-2 py-2.5 text-[14px] text-gray-700"
+                  >
+                    <LayoutDashboard size={14} className="text-gray-400" />
+                    Admin Dashboard
+                  </Link>
+                ) : (
+                  <Link
+                    href={ROUTES.DASHBOARD}
+                    onClick={() => setMobileOpen(false)}
+                    className="flex items-center gap-2 py-2.5 text-[14px] text-gray-700"
+                  >
+                    <LayoutDashboard size={14} className="text-gray-400" />
+                    My Dashboard
+                  </Link>
+                )}
+                <Link
+                  href={ROUTES.ORDERS}
+                  onClick={() => setMobileOpen(false)}
+                  className="flex items-center gap-2 py-2.5 text-[14px] text-gray-700"
+                >
+                  <Package size={14} className="text-gray-400" />
+                  My Orders
+                </Link>
+                <button
+                  onClick={() => { logout(); setMobileOpen(false); }}
+                  className="flex items-center gap-2 w-full py-2.5 text-[14px] text-[#D0021B]"
+                >
+                  <LogOut size={14} />
+                  Logout
+                </button>
+              </div>
+            ) : (
               <div
                 className="flex gap-3 pt-3 mt-1 border-t"
                 style={{ borderColor: 'var(--color-border)' }}
               >
                 <Link
-                  href="/auth/login"
+                  href={ROUTES.LOGIN}
                   onClick={() => setMobileOpen(false)}
                   className="flex-1 text-center py-2 text-[13px] border rounded-[4px]"
                   style={{ borderColor: 'var(--color-border)', color: 'var(--color-text-secondary)' }}
@@ -226,7 +393,7 @@ export function Navbar() {
                   Login
                 </Link>
                 <Link
-                  href="/auth/register"
+                  href={ROUTES.REGISTER}
                   onClick={() => setMobileOpen(false)}
                   className="flex-1 text-center py-2 text-[13px] text-white rounded-[4px]"
                   style={{ background: 'var(--color-primary)' }}

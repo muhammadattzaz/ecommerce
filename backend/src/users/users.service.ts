@@ -9,6 +9,12 @@ interface CreateUserData {
   passwordHash: string;
 }
 
+interface UpdateUserData {
+  name?: string;
+  email?: string;
+  passwordHash?: string;
+}
+
 @Injectable()
 export class UsersService {
   constructor(@InjectModel(User.name) private readonly userModel: Model<UserDocument>) {}
@@ -32,7 +38,17 @@ export class UsersService {
     return this.userModel.findById(id).select('+refreshToken').exec();
   }
 
+  async findByIdWithPasswordHash(id: string): Promise<UserDocument | null> {
+    return this.userModel.findById(id).select('+passwordHash').exec();
+  }
+
   async updateRefreshToken(id: string, hash: string | null): Promise<void> {
     await this.userModel.findByIdAndUpdate(id, { refreshToken: hash }).exec();
+  }
+
+  async update(id: string, data: UpdateUserData): Promise<UserDocument | null> {
+    return this.userModel
+      .findByIdAndUpdate(id, { $set: data }, { new: true })
+      .exec();
   }
 }

@@ -30,6 +30,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
           {[
             { href: ROUTES.ADMIN.DASHBOARD, label: 'Dashboard' },
             { href: ROUTES.ADMIN.PRODUCTS, label: 'Products' },
+            { href: ROUTES.ADMIN.CATEGORIES, label: 'Categories' },
             { href: ROUTES.ADMIN.ORDERS, label: 'Orders' },
           ].map(({ href, label }) => (
             <Link
@@ -46,9 +47,10 @@ export default async function AdminLayout({ children }: { children: React.ReactN
           <p className="text-[11px] text-white/40 truncate">{user.email}</p>
           <Link
             href={ROUTES.HOME}
-            className="block mt-1.5 text-[11px] text-white/40 hover:text-white/70 transition-colors"
+            className="flex items-center gap-1.5 mt-2 text-[12px] font-medium text-white/60 hover:text-white transition-colors"
           >
-            ← Back to store
+            <span>←</span>
+            <span>Back to Store</span>
           </Link>
         </div>
       </aside>
@@ -60,7 +62,9 @@ export default async function AdminLayout({ children }: { children: React.ReactN
         <div className="flex items-center gap-3 text-[12px] text-white/70">
           <Link href={ROUTES.ADMIN.DASHBOARD} className="hover:text-white">Dashboard</Link>
           <Link href={ROUTES.ADMIN.PRODUCTS} className="hover:text-white">Products</Link>
+          <Link href={ROUTES.ADMIN.CATEGORIES} className="hover:text-white">Categories</Link>
           <Link href={ROUTES.ADMIN.ORDERS} className="hover:text-white">Orders</Link>
+          <Link href={ROUTES.HOME} className="hover:text-white text-white/40">← Store</Link>
         </div>
       </div>
 

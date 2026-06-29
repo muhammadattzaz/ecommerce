@@ -21,6 +21,8 @@ export const ordersApi = {
   createOrder: (data: CreateOrderData) => apiClient.post<Order>('/orders', data),
 
   // Admin
+  getAdminOrder: (id: string) => apiClient.get<Order>(`/orders/admin/${id}`),
+
   getAllOrders: (params: { page?: number; limit?: number; status?: string } = {}) => {
     const q = new URLSearchParams();
     if (params.page) q.set('page', String(params.page));

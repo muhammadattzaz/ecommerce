@@ -1,5 +1,6 @@
 import {
   Injectable,
+  BadRequestException,
   ConflictException,
   UnauthorizedException,
 } from '@nestjs/common';
@@ -10,6 +11,7 @@ import * as bcrypt from 'bcrypt';
 import { UsersService } from '../users/users.service';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
+import { UpdateProfileDto } from './dto/update-profile.dto';
 import { UserDocument } from '../users/schemas/user.schema';
 
 @Injectable()
@@ -76,6 +78,28 @@ export class AuthService {
     const user = await this.usersService.findById(userId);
     if (!user) throw new UnauthorizedException();
     return user;
+  }
+
+  async updateProfile(userId: string, dto: UpdateProfileDto): Promise<UserDocument> {
+    const updates: Record<string, string> = {};
+
+    if (dto.name) updates.name = dto.name;
+    if (dto.email) updates.email = dto.email.toLowerCase();
+
+    if (dto.newPassword) {
+      if (!dto.currentPassword) {
+        throw new BadRequestException('currentPassword is required to change your password');
+      }
+      const user = await this.usersService.findByIdWithPasswordHash(userId);
+      if (!user) throw new UnauthorizedException();
+      const valid = await bcrypt.compare(dto.currentPassword, user.passwordHash);
+      if (!valid) throw new BadRequestException('Current password is incorrect');
+      updates.passwordHash = await bcrypt.hash(dto.newPassword, 12);
+    }
+
+    const updated = await this.usersService.update(userId, updates);
+    if (!updated) throw new UnauthorizedException();
+    return updated;
   }
 
   private generateTokens(user: UserDocument) {

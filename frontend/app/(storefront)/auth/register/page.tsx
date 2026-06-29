@@ -66,6 +66,9 @@ export default function RegisterPage() {
               className="w-full h-10 px-3 border border-[#E8E8E8] rounded-[4px] text-[14px] outline-none focus:border-[#F57224]"
               placeholder="Min. 8 characters"
             />
+            <p className="mt-1 text-[11px] text-gray-400">
+              Must include uppercase, lowercase, number, and special character (@$!%*?&amp;)
+            </p>
           </div>
 
           {error && (

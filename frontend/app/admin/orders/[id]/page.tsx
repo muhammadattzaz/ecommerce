@@ -4,7 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { ChevronRight } from 'lucide-react';
-import { useOrder, useUpdateOrderStatus } from '@/lib/hooks/use-orders';
+import { useAdminOrder, useUpdateOrderStatus } from '@/lib/hooks/use-orders';
 import { formatPrice } from '@/lib/utils';
 import { ROUTES } from '@/lib/routes';
 import type { OrderStatus } from '@/types/order';
@@ -26,7 +26,7 @@ const STATUS_LABELS: Record<OrderStatus, string> = {
 
 export default function AdminOrderDetailPage() {
   const { id } = useParams<{ id: string }>();
-  const { data: order, isLoading } = useOrder(id);
+  const { data: order, isLoading } = useAdminOrder(id);
   const updateStatus = useUpdateOrderStatus();
   const [selectedStatus, setSelectedStatus] = useState<OrderStatus | ''>('');
 

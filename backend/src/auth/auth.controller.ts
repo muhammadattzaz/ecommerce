@@ -2,6 +2,7 @@ import {
   Controller,
   Post,
   Get,
+  Patch,
   Body,
   Res,
   Req,
@@ -20,6 +21,7 @@ import { AuthGuard } from '@nestjs/passport';
 import { AuthService } from './auth.service';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
+import { UpdateProfileDto } from './dto/update-profile.dto';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import type { UserDocument } from '../users/schemas/user.schema';
@@ -91,5 +93,19 @@ export class AuthController {
   @ApiResponse({ status: 401, description: 'Not authenticated' })
   getMe(@CurrentUser() user: UserDocument) {
     return this.authService.getMe(user._id.toString());
+  }
+
+  @Patch('me')
+  @UseGuards(JwtAuthGuard)
+  @ApiCookieAuth('access_token')
+  @ApiOperation({ summary: 'Update current user profile (name, email, password)' })
+  @ApiResponse({ status: 200, description: 'Profile updated' })
+  @ApiResponse({ status: 400, description: 'Current password incorrect or validation error' })
+  @ApiResponse({ status: 401, description: 'Not authenticated' })
+  updateMe(
+    @CurrentUser() user: UserDocument,
+    @Body() dto: UpdateProfileDto,
+  ) {
+    return this.authService.updateProfile(user._id.toString(), dto);
   }
 }
