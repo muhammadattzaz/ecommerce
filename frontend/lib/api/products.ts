@@ -37,13 +37,8 @@ export const productsApi = {
   getAllAdmin: (params: ProductQueryParams = {}) =>
     apiClient.get<PaginatedResponse<Product>>(`/products/admin${buildQuery(params)}`),
 
-  create: (data: FormData) =>
-    fetch(`${process.env.NEXT_PUBLIC_API_URL}/products`, {
-      method: 'POST',
-      credentials: 'include',
-      body: JSON.stringify(Object.fromEntries(data)),
-      headers: { 'Content-Type': 'application/json' },
-    }).then((r) => r.json()),
+  create: (data: Partial<Product> & { category: string }) =>
+    apiClient.post<Product>('/products', data),
 
   update: (id: string, data: Partial<Product>) =>
     apiClient.patch<Product>(`/products/${id}`, data),
