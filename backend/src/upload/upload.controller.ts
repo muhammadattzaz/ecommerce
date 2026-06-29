@@ -9,6 +9,7 @@ import {
 import { FileInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
 import { extname, join } from 'path';
+import { mkdirSync } from 'fs';
 import { randomUUID } from 'crypto';
 import { ApiTags, ApiOperation, ApiConsumes, ApiBody, ApiBearerAuth } from '@nestjs/swagger';
 import type { MulterOptions } from '@nestjs/platform-express/multer/interfaces/multer-options.interface';
@@ -19,9 +20,18 @@ import { UploadService } from './upload.service';
 
 const ALLOWED_MIME_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
 
+// Resolved at startup so the directory is always absolute regardless of cwd
+const UPLOAD_DEST = join(
+  process.cwd(),
+  process.env.UPLOAD_DIR ?? '../frontend/public/assets/images/uploads',
+);
+
+// Ensure the directory exists — Next.js won't serve from public/ if the folder is missing
+mkdirSync(UPLOAD_DEST, { recursive: true });
+
 const multerOptions: MulterOptions = {
   storage: diskStorage({
-    destination: join(process.cwd(), 'uploads'),
+    destination: UPLOAD_DEST,
     filename: (_req, file, cb) => {
       const ext = extname(file.originalname).toLowerCase();
       cb(null, `${randomUUID()}${ext}`);

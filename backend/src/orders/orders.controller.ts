@@ -75,6 +75,14 @@ export class OrdersController {
     );
   }
 
+  @Get('admin/:id')
+  @UseGuards(RolesGuard)
+  @Roles('admin')
+  @ApiOperation({ summary: 'Get single order (admin)' })
+  getAdminOrder(@Param('id', ParseMongoIdPipe) id: string) {
+    return this.ordersService.findOneAdmin(id);
+  }
+
   @Patch('admin/:id/status')
   @UseGuards(RolesGuard)
   @Roles('admin')

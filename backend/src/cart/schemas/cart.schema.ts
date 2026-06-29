@@ -16,7 +16,7 @@ export class CartItem {
 
 @Schema({ timestamps: true })
 export class Cart {
-  @Prop({ type: MongooseSchema.Types.ObjectId, ref: 'User', required: true, unique: true })
+  @Prop({ type: MongooseSchema.Types.ObjectId, ref: 'User', required: true })
   user: Types.ObjectId;
 
   @Prop({ type: [{ product: { type: MongooseSchema.Types.ObjectId, ref: 'Product' }, quantity: Number, priceAtAdd: Number }], default: [] })

@@ -2,9 +2,10 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { Plus, Pencil, Trash2 } from 'lucide-react';
-import { useProducts, useDeleteProduct } from '@/lib/hooks/use-products';
-import { formatPrice } from '@/lib/utils';
+import { useProductsAdmin, useDeleteProduct } from '@/lib/hooks/use-products';
+import { formatPrice, getImageUrl } from '@/lib/utils';
 import { ROUTES } from '@/lib/routes';
 import type { Product } from '@/types/product';
 
@@ -13,7 +14,7 @@ export default function AdminProductsPage() {
   const [search, setSearch] = useState('');
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
 
-  const { data, isLoading } = useProducts({ page, limit: 20, search: search || undefined });
+  const { data, isLoading } = useProductsAdmin({ page, limit: 20, search: search || undefined });
   const deleteProduct = useDeleteProduct();
 
   async function handleDelete(id: string) {
@@ -52,7 +53,7 @@ export default function AdminProductsPage() {
           <table className="w-full text-[13px]">
             <thead>
               <tr className="border-b border-[#E8E8E8] bg-[#FAFAFA]">
-                <th className="text-left px-4 py-2.5 font-semibold text-gray-600">Name</th>
+                <th className="text-left px-4 py-2.5 font-semibold text-gray-600">Product</th>
                 <th className="text-left px-4 py-2.5 font-semibold text-gray-600 hidden md:table-cell">Category</th>
                 <th className="text-right px-4 py-2.5 font-semibold text-gray-600">Price</th>
                 <th className="text-right px-4 py-2.5 font-semibold text-gray-600 hidden sm:table-cell">Stock</th>
@@ -80,10 +81,26 @@ export default function AdminProductsPage() {
               ) : (
                 data?.data.map((product: Product) => {
                   const cat = product.category as { name: string } | null;
+                  const imgSrc = getImageUrl(product.imageUrl);
                   return (
                     <tr key={product._id} className="border-b border-[#F5F5F5] hover:bg-[#FAFAFA] transition-colors">
-                      <td className="px-4 py-2.5 font-medium text-gray-800 max-w-[200px] truncate">
-                        {product.name}
+                      <td className="px-4 py-2.5">
+                        <div className="flex items-center gap-3">
+                          <div className="relative w-9 h-9 rounded-[4px] overflow-hidden bg-[#F5F5F5] shrink-0 border border-[#E8E8E8]">
+                            {imgSrc ? (
+                              <Image src={imgSrc} alt={product.name} fill className="object-cover" />
+                            ) : (
+                              <div className="absolute inset-0 flex items-center justify-center">
+                                <svg viewBox="0 0 24 24" className="w-4 h-4 text-gray-300">
+                                  <rect x="3" y="4" width="18" height="16" rx="2" fill="currentColor" opacity="0.4" />
+                                  <circle cx="8" cy="9" r="1.5" fill="currentColor" />
+                                  <path d="M3 15 L9 11 L13 14 L16 12 L21 15 L21 20 L3 20Z" fill="currentColor" opacity="0.6" />
+                                </svg>
+                              </div>
+                            )}
+                          </div>
+                          <span className="font-medium text-gray-800 max-w-[160px] truncate">{product.name}</span>
+                        </div>
                       </td>
                       <td className="px-4 py-2.5 text-gray-500 hidden md:table-cell">
                         {cat?.name ?? '—'}

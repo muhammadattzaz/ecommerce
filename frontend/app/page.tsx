@@ -5,7 +5,7 @@ import { ProductCard } from '@/components/storefront/product-card';
 import type { Product, Category } from '@/types/product';
 import type { PaginatedResponse } from '@/types/api';
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001/api/v1';
+const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8000/api/v1';
 
 async function fetchProducts(params: string): Promise<Product[]> {
   try {

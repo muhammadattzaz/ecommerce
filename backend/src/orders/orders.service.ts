@@ -129,6 +129,12 @@ export class OrdersService {
     return { data, total, page, limit, totalPages: Math.ceil(total / limit) };
   }
 
+  async findOneAdmin(orderId: string): Promise<OrderDocument> {
+    const order = await this.orderModel.findById(orderId).populate('user', 'name email');
+    if (!order) throw new NotFoundException('Order not found');
+    return order;
+  }
+
   async updateStatus(orderId: string, dto: UpdateOrderStatusDto): Promise<OrderDocument> {
     const order = await this.orderModel.findByIdAndUpdate(
       orderId,

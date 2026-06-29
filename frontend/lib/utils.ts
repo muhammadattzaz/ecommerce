@@ -14,12 +14,16 @@ export function formatPrice(pence: number): string {
 
 export function getImageUrl(path?: string | null): string | null {
   if (!path) return null;
-  if (path.startsWith('http')) return path;
-  const base = (process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8000/api/v1').replace(
-    '/api/v1',
-    '',
-  );
-  return `${base}${path}`;
+  // Absolute URLs from the upload service point to frontend public/ — extract the pathname
+  // so next/image reads the file locally without needing remotePatterns.
+  if (path.startsWith('http')) {
+    try {
+      return new URL(path).pathname;
+    } catch {
+      return path;
+    }
+  }
+  return path;
 }
 
 export function getDiscount(price: number, originalPrice: number): number {

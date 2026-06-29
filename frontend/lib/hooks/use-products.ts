@@ -29,6 +29,14 @@ export function useCategories() {
   });
 }
 
+export function useProductsAdmin(params: ProductQueryParams = {}) {
+  return useQuery({
+    queryKey: ['products', 'admin', params],
+    queryFn: () => productsApi.getAllAdmin(params),
+    staleTime: 1000 * 60 * 1,
+  });
+}
+
 // Admin mutations
 export function useDeleteProduct() {
   const queryClient = useQueryClient();
