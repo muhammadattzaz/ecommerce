@@ -6,15 +6,9 @@ import { useRouter } from 'next/navigation';
 import { Search, ShoppingCart, Menu, X, ChevronDown, User, LayoutDashboard, Package, LogOut, Settings } from 'lucide-react';
 import { useCart } from '@/lib/hooks/use-cart';
 import { useAuth } from '@/lib/hooks/use-auth';
+import { useCategories } from '@/lib/hooks/use-products';
 import { ROUTES } from '@/lib/routes';
-
-const CATEGORIES = [
-  { name: 'Electronics', slug: 'electronics' },
-  { name: 'Clothing', slug: 'clothing' },
-  { name: 'Books', slug: 'books' },
-  { name: 'Home & Garden', slug: 'home-garden' },
-  { name: 'Sports', slug: 'sports' },
-];
+import type { Category } from '@/types/product';
 
 function UserDropdown({ user, isAdmin, logout }: { user: { name: string; email: string }; isAdmin: boolean; logout: () => void }) {
   const [open, setOpen] = useState(false);
@@ -131,6 +125,7 @@ export function Navbar() {
   const router = useRouter();
   const { user, isAuthenticated, isAdmin, logout } = useAuth();
   const { data: cart } = useCart();
+  const { data: categories } = useCategories();
 
   const cartCount =
     cart?.items.reduce((acc: number, item: { quantity: number }) => acc + item.quantity, 0) ?? 0;
@@ -144,44 +139,6 @@ export function Navbar() {
 
   return (
     <header className="sticky top-0 z-50" style={{ boxShadow: 'var(--shadow-navbar)' }}>
-      {/* ── Utility bar ── */}
-      <div className="hidden sm:block" style={{ background: '#1A1A1A' }}>
-        <div className="max-w-[1200px] mx-auto px-4 h-9 flex items-center justify-between">
-          <div className="flex items-center gap-4 text-[12px] text-white/70">
-            <span>Save More On App</span>
-            <span className="text-white/30">·</span>
-            <Link href="#" className="hover:text-white transition-colors">Sell on ShopForge</Link>
-            <span className="text-white/30">·</span>
-            <Link href="#" className="hover:text-white transition-colors">Help &amp; Support</Link>
-          </div>
-          <div className="flex items-center gap-3 text-[12px] text-white/70">
-            {isAuthenticated ? (
-              <div className="flex items-center gap-2">
-                {isAdmin && (
-                  <>
-                    <Link href={ROUTES.ADMIN.DASHBOARD} className="text-white/50 hover:text-white transition-colors">
-                      Admin Panel
-                    </Link>
-                    <span className="text-white/30">·</span>
-                  </>
-                )}
-                <Link href={ROUTES.ORDERS} className="hover:text-white transition-colors">Orders</Link>
-                <span className="text-white/30">·</span>
-                <Link href={ROUTES.PROFILE} className="hover:text-white transition-colors">My Profile</Link>
-              </div>
-            ) : (
-              <>
-                <Link href={ROUTES.LOGIN} className="hover:text-white transition-colors">Login</Link>
-                <span className="text-white/30">·</span>
-                <Link href={ROUTES.REGISTER} className="text-white font-medium hover:text-white/80 transition-colors">
-                  Sign Up
-                </Link>
-              </>
-            )}
-          </div>
-        </div>
-      </div>
-
       {/* ── Main nav bar ── */}
       <div style={{ background: 'var(--color-primary)' }}>
         <div className="max-w-[1200px] mx-auto px-4 h-16 flex items-center gap-4">
@@ -268,7 +225,7 @@ export function Navbar() {
             <span>All Categories</span>
             <ChevronDown size={13} />
           </div>
-          {CATEGORIES.map((cat) => (
+          {categories?.map((cat: Category) => (
             <Link
               key={cat.slug}
               href={`/products?category=${cat.slug}`}
@@ -316,7 +273,7 @@ export function Navbar() {
             <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider mb-2">
               Categories
             </p>
-            {CATEGORIES.map((cat) => (
+            {categories?.map((cat: Category) => (
               <Link
                 key={cat.slug}
                 href={`/products?category=${cat.slug}`}

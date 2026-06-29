@@ -5,7 +5,7 @@ import { ProductCard } from '@/components/storefront/product-card';
 import type { Product, Category } from '@/types/product';
 import type { PaginatedResponse } from '@/types/api';
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8000/api/v1';
+const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001/api/v1';
 
 async function fetchProducts(params: string): Promise<Product[]> {
   try {
@@ -39,9 +39,9 @@ const CATEGORY_EMOJI: Record<string, string> = {
 };
 
 export default async function HomePage() {
-  const [flashDeals, justForYou, categories] = await Promise.all([
-    fetchProducts('sort=price_asc'),
-    fetchProducts('sort=createdAt_desc'),
+  const [latestProducts, popularProducts, categories] = await Promise.all([
+    fetchProducts('sort=newest'),
+    fetchProducts('sort=popular'),
     fetchCategories(),
   ]);
 
@@ -106,33 +106,33 @@ export default async function HomePage() {
           </div>
         </section>
 
-        {/* ── Flash Deals ── */}
+        {/* ── Popular Items ── */}
         <section className="bg-white mb-2 py-5">
           <div className="max-w-[1200px] mx-auto px-4">
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-3">
                 <h2 className="text-[20px] font-bold" style={{ color: 'var(--color-primary)' }}>
-                  🔥 Flash Deals
+                  🔥 Popular Items
                 </h2>
                 <span
                   className="text-[13px] font-medium pb-0.5 border-b-2"
                   style={{ color: 'var(--color-primary)', borderColor: 'var(--color-primary)' }}
                 >
-                  On Sale Now
+                  Best Sellers
                 </span>
               </div>
               <Link
-                href="/products"
+                href="/products?sort=popular"
                 className="text-[13px] font-medium border px-4 py-1.5 rounded-[2px] hover:bg-[#FFF3EC] transition-colors hidden sm:block"
                 style={{ color: 'var(--color-primary)', borderColor: 'var(--color-primary)' }}
               >
-                SHOP ALL PRODUCTS →
+                VIEW ALL →
               </Link>
             </div>
 
-            {flashDeals.length > 0 ? (
+            {popularProducts.length > 0 ? (
               <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5">
-                {flashDeals.map((product) => (
+                {popularProducts.map((product) => (
                   <ProductCard
                     key={product._id}
                     name={product.name}
@@ -145,16 +145,56 @@ export default async function HomePage() {
                 ))}
               </div>
             ) : (
+              <p className="text-[13px] text-gray-400 py-6 text-center">No products found.</p>
+            )}
+          </div>
+        </section>
+
+        {/* ── Latest Products ── */}
+        <section className="bg-white mb-2 py-5">
+          <div className="max-w-[1200px] mx-auto px-4">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-3">
+                <h2 className="text-[20px] font-bold" style={{ color: 'var(--color-primary)' }}>
+                  🆕 Latest Products
+                </h2>
+                <span
+                  className="text-[13px] font-medium pb-0.5 border-b-2"
+                  style={{ color: 'var(--color-primary)', borderColor: 'var(--color-primary)' }}
+                >
+                  Just Arrived
+                </span>
+              </div>
+              <Link
+                href="/products?sort=newest"
+                className="text-[13px] font-medium border px-4 py-1.5 rounded-[2px] hover:bg-[#FFF3EC] transition-colors hidden sm:block"
+                style={{ color: 'var(--color-primary)', borderColor: 'var(--color-primary)' }}
+              >
+                SHOP ALL PRODUCTS →
+              </Link>
+            </div>
+
+            {latestProducts.length > 0 ? (
               <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5">
-                {Array.from({ length: 6 }).map((_, i) => (
-                  <div key={i} className="aspect-square bg-gray-100 rounded-[4px] animate-pulse" />
+                {latestProducts.map((product) => (
+                  <ProductCard
+                    key={product._id}
+                    name={product.name}
+                    slug={product.slug}
+                    price={product.price}
+                    imageUrl={product.imageUrl}
+                    rating={product.rating}
+                    reviewCount={product.reviewCount}
+                  />
                 ))}
               </div>
+            ) : (
+              <p className="text-[13px] text-gray-400 py-6 text-center">No products found.</p>
             )}
 
             <div className="sm:hidden mt-3 text-center">
               <Link href="/products" className="text-[13px] font-medium" style={{ color: 'var(--color-primary)' }}>
-                See all deals →
+                See all products →
               </Link>
             </div>
           </div>
@@ -185,43 +225,6 @@ export default async function HomePage() {
             </div>
           </section>
         )}
-
-        {/* ── Just For You ── */}
-        <section className="bg-white mb-2 py-5">
-          <div className="max-w-[1200px] mx-auto px-4">
-            <div className="flex items-center justify-between mb-4">
-              <div>
-                <h2 className="text-[20px] font-bold text-gray-900">Just For You</h2>
-                <p className="text-[12px] text-gray-500 mt-0.5">Popular picks across all categories</p>
-              </div>
-              <Link href="/products" className="text-[13px]" style={{ color: 'var(--color-primary)' }}>
-                View All →
-              </Link>
-            </div>
-
-            {justForYou.length > 0 ? (
-              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5">
-                {justForYou.map((product) => (
-                  <ProductCard
-                    key={product._id}
-                    name={product.name}
-                    slug={product.slug}
-                    price={product.price}
-                    imageUrl={product.imageUrl}
-                    rating={product.rating}
-                    reviewCount={product.reviewCount}
-                  />
-                ))}
-              </div>
-            ) : (
-              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5">
-                {Array.from({ length: 6 }).map((_, i) => (
-                  <div key={i} className="aspect-square bg-gray-100 rounded-[4px] animate-pulse" />
-                ))}
-              </div>
-            )}
-          </div>
-        </section>
 
         {/* ── Sign-up nudge ── */}
         <section className="mb-2 py-8" style={{ background: 'var(--color-primary-light)' }}>
